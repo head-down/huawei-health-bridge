@@ -18,3 +18,6 @@ out/
 .navigation/
 *.log
 *.hprof
+# Huawei credentials (contains secrets)
+app/agconnect-services.json
+app/src/main/java/com/headdown/healthbridge/huawei/HuaweiConfig.kt

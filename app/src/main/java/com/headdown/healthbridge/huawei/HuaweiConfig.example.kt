@@ -1,20 +1,23 @@
 package com.headdown.healthbridge.huawei
 
 /**
- * 华为 Health Kit OAuth 2.0 配置
+ * 华为 Health Kit OAuth 2.0 配置模板
  *
  * 前置条件：
  * 1. 注册华为开发者账号：https://developer.huawei.com/
  * 2. 在 AppGallery Connect 创建应用
  * 3. 开通 Health Kit 服务
- * 4. 将下面的值替换为你的真实配置
+ * 4. 将本文件重命名为 HuaweiConfig.kt，填入真实值
  */
 object HuaweiConfig {
     /** 华为开发者控制台获取的 App ID */
-    const val CLIENT_ID = "YOUR_HUAWEI_CLIENT_ID"
+    const val CLIENT_ID = "YOUR_CLIENT_ID"
 
     /** 华为开发者控制台获取的 App Secret */
-    const val CLIENT_SECRET = "YOUR_HUAWEI_CLIENT_SECRET"
+    const val CLIENT_SECRET = "YOUR_CLIENT_SECRET"
+
+    /** App ID (agconnect-services.json 中) */
+    const val APP_ID = "YOUR_APP_ID"
 
     /** OAuth 授权回调地址（需与华为控制台配置一致） */
     const val REDIRECT_URI = "com.headdown.healthbridge://oauth"
