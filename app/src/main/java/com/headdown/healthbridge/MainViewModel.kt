@@ -81,8 +81,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * 用回调 code 换取 access token，成功后更新 UI 状态。
      */
     fun exchangeCodeForToken(code: String) {
-        huaweiClient.exchangeCodeForToken(code)
-        _uiState.update { it.copy(huaweiAuthState = HuaweiAuthState.Authorized) }
+        viewModelScope.launch(Dispatchers.IO) {
+            val success = huaweiClient.exchangeCodeForToken(code)
+            _uiState.update {
+                if (success) {
+                    it.copy(huaweiAuthState = HuaweiAuthState.Authorized)
+                } else {
+                    it.copy(huaweiAuthState = HuaweiAuthState.Idle,
+                        syncError = "华为授权失败，请重试")
+                }
+            }
+        }
     }
 
     /**

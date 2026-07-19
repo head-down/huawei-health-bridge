@@ -19,6 +19,11 @@ class SyncPreferences(context: Context) {
         prefs.edit().putLong(KEY_LAST_SYNCED_AT, endTimeMs).apply()
     }
 
+    /** 清除同步检查点（调试用） */
+    fun clearSyncTime() {
+        prefs.edit().remove(KEY_LAST_SYNCED_AT).apply()
+    }
+
     /** 计算同步窗口起始时间：最近一次同步时间，或 30 天前 */
     fun computeStartTime(endTimeMs: Long): Long {
         val lastSync = getLastSyncTime()

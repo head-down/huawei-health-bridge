@@ -1,6 +1,6 @@
 package com.headdown.healthbridge
 
-import com.headdown.healthbridge.huawei.HuaweiHealthClient
+import com.headdown.healthbridge.data.SleepData
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -44,7 +44,7 @@ class ExampleTest {
 
     @Test
     fun `project data class works in test`() {
-        val sleep = HuaweiHealthClient.SleepData(
+        val sleep = SleepData(
             startTime = 1700000000000,
             endTime = 1700003600000,
             sleepState = 2

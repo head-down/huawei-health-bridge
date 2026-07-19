@@ -8,7 +8,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import org.json.JSONObject
-import java.io.IOException
 
 /**
  * 华为 Health Kit REST API 客户端 (v2)
@@ -78,8 +77,8 @@ class HuaweiHealthClient @JvmOverloads constructor(
             "access_type=offline"
     }
 
-    /** 用授权码换取 Access Token */
-    fun exchangeCodeForToken(code: String) {
+    /** 用授权码换取 Access Token（挂起函数，调用方需在协程中调用） */
+    suspend fun exchangeCodeForToken(code: String): Boolean = withContext(Dispatchers.IO) {
         val body = FormBody.Builder()
             .add("grant_type", "authorization_code")
             .add("client_id", HuaweiConfig.CLIENT_ID)
@@ -93,18 +92,15 @@ class HuaweiHealthClient @JvmOverloads constructor(
             .post(body)
             .build()
 
-        client.newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onFailure(call: Call, e: IOException) { /* TODO */ }
-            override fun onResponse(call: Call, response: Response) {
-                try {
-                    val json = JSONObject(response.body!!.string())
-                    accessToken = json.getString("access_token")
-                    tokenExpiry = System.currentTimeMillis() + json.getLong("expires_in") * 1000
-                } catch (e: Exception) {
-                    // 华为 API 返回的响应可能不含 access_token（如 code 无效），静默丢弃
-                }
-            }
-        })
+        try {
+            val response = client.newCall(request).execute()
+            val json = JSONObject(response.body!!.string())
+            accessToken = json.getString("access_token")
+            tokenExpiry = System.currentTimeMillis() + json.getLong("expires_in") * 1000
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     /** 轻量级检查 Token 是否有效，无副作用 */
@@ -360,43 +356,18 @@ class HuaweiHealthClient @JvmOverloads constructor(
     // ============================================================
 
     /** 查询体重（v1 端点，暂未迁移到 v2） */
-    fun queryWeight(startMillis: Long, endMillis: Long): List<WeightData> {
+    fun queryWeight(startMillis: Long, endMillis: Long): List<com.headdown.healthbridge.data.WeightData> {
         // out of scope for v2, return empty
         return emptyList()
     }
 
     /** 查询血氧（v1 端点，暂未迁移到 v2） */
-    fun querySpO2(startMillis: Long, endMillis: Long): List<SpO2Data> {
+    fun querySpO2(startMillis: Long, endMillis: Long): List<com.headdown.healthbridge.data.SpO2Data> {
         return emptyList()
     }
 
     /** 查询体温（v1 端点，暂未迁移到 v2） */
-    fun queryTemperature(startMillis: Long, endMillis: Long): List<TemperatureData> {
+    fun queryTemperature(startMillis: Long, endMillis: Long): List<com.headdown.healthbridge.data.TemperatureData> {
         return emptyList()
     }
-
-    // ============================================================
-    // 向后兼容：内部数据类（供测试和 HealthConnectWriter 使用）
-    // ============================================================
-
-    data class SleepData(
-        val startTime: Long,
-        val endTime: Long,
-        val sleepState: Int
-    )
-
-    data class WeightData(
-        val timestamp: Long,
-        val weightKg: Float
-    )
-
-    data class SpO2Data(
-        val timestamp: Long,
-        val saturation: Float
-    )
-
-    data class TemperatureData(
-        val timestamp: Long,
-        val celsius: Float
-    )
 }

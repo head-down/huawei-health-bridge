@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.work.*
 import com.headdown.healthbridge.data.AuthProvider
+import com.headdown.healthbridge.data.SyncPreferences
 import com.headdown.healthbridge.healthconnect.HealthConnectWriter
 import com.headdown.healthbridge.huawei.HuaweiHealthClient
 import kotlinx.coroutines.coroutineScope
-import java.util.concurrent.TimeUnit
 
 /**
  * WorkManager 后台同步 Worker。
@@ -20,11 +20,7 @@ class SyncWorker(
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
-    companion object {
-        private const val PREFS_NAME = "sync_prefs"
-        private const val KEY_LAST_SYNC = "last_synced_at"
-        private const val SYNC_WINDOW_DAYS = 30L
-    }
+    private val syncPrefs = SyncPreferences(applicationContext)
 
     override suspend fun doWork(): Result = coroutineScope {
         val dataSource = HuaweiHealthClient(applicationContext)
@@ -47,17 +43,14 @@ class SyncWorker(
             }
 
             // Step 2: 计算同步窗口
-            val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val lastSyncedAt = prefs.getLong(KEY_LAST_SYNC, 0L)
             val endTime = System.currentTimeMillis()
-            val thirtyDaysAgo = endTime - TimeUnit.DAYS.toMillis(SYNC_WINDOW_DAYS)
-            val startTime = if (lastSyncedAt > 0) lastSyncedAt else thirtyDaysAgo
+            val startTime = syncPrefs.computeStartTime(endTime)
 
             // Step 3: 执行同步
             syncer.performSync(startTime, endTime)
 
             // Step 4: 保存检查点
-            prefs.edit().putLong(KEY_LAST_SYNC, endTime).apply()
+            syncPrefs.saveSyncTime(endTime)
 
             Result.success()
         } catch (e: Exception) {
@@ -67,7 +60,6 @@ class SyncWorker(
 
     /** 清除同步检查点（调试用） */
     fun clearCheckpoint() {
-        applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit().remove(KEY_LAST_SYNC).apply()
+        syncPrefs.clearSyncTime()
     }
 }

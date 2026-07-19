@@ -6,8 +6,10 @@ import androidx.health.connect.client.units.*
 import com.headdown.healthbridge.data.ExerciseRecord
 import com.headdown.healthbridge.data.HeartRateData
 import com.headdown.healthbridge.data.SleepRecord
+import com.headdown.healthbridge.data.SpO2Data
 import com.headdown.healthbridge.data.StepsData
-import com.headdown.healthbridge.huawei.HuaweiHealthClient
+import com.headdown.healthbridge.data.TemperatureData
+import com.headdown.healthbridge.data.WeightData
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -127,7 +129,7 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     // 体重
     // ============================================================
 
-    suspend fun writeWeightRecords(weightList: List<HuaweiHealthClient.WeightData>) {
+    suspend fun writeWeightRecords(weightList: List<WeightData>) {
         val records = weightList.map { w ->
             WeightRecord(
                 time = w.timestamp.toUtcInstant(),
@@ -142,7 +144,7 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     // 血氧
     // ============================================================
 
-    suspend fun writeSpO2Records(spo2List: List<HuaweiHealthClient.SpO2Data>) {
+    suspend fun writeSpO2Records(spo2List: List<SpO2Data>) {
         val records = spo2List.map { s ->
             OxygenSaturationRecord(
                 time = s.timestamp.toUtcInstant(),
@@ -157,7 +159,7 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     // 体温
     // ============================================================
 
-    suspend fun writeTemperatureRecords(tempList: List<HuaweiHealthClient.TemperatureData>) {
+    suspend fun writeTemperatureRecords(tempList: List<TemperatureData>) {
         val records = tempList.map { t ->
             BodyTemperatureRecord(
                 time = t.timestamp.toUtcInstant(),
