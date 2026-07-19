@@ -96,9 +96,13 @@ class HuaweiHealthClient @JvmOverloads constructor(
         client.newCall(request).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: Call, e: IOException) { /* TODO */ }
             override fun onResponse(call: Call, response: Response) {
-                val json = JSONObject(response.body!!.string())
-                accessToken = json.getString("access_token")
-                tokenExpiry = System.currentTimeMillis() + json.getLong("expires_in") * 1000
+                try {
+                    val json = JSONObject(response.body!!.string())
+                    accessToken = json.getString("access_token")
+                    tokenExpiry = System.currentTimeMillis() + json.getLong("expires_in") * 1000
+                } catch (e: Exception) {
+                    // 华为 API 返回的响应可能不含 access_token（如 code 无效），静默丢弃
+                }
             }
         })
     }
