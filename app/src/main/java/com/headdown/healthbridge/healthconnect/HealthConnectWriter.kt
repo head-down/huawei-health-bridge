@@ -3,6 +3,10 @@ package com.headdown.healthbridge.healthconnect
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.*
 import androidx.health.connect.client.units.*
+import com.headdown.healthbridge.data.ExerciseRecord
+import com.headdown.healthbridge.data.HeartRateData
+import com.headdown.healthbridge.data.SleepRecord
+import com.headdown.healthbridge.data.StepsData
 import com.headdown.healthbridge.huawei.HuaweiHealthClient
 import java.time.Instant
 import java.time.ZoneOffset
@@ -19,7 +23,7 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     // 睡眠
     // ============================================================
 
-    suspend fun writeSleepRecords(sleepList: List<HuaweiHealthClient.SleepData>) {
+    suspend fun writeSleepRecords(sleepList: List<SleepRecord>) {
         val records = sleepList.map { sleep ->
             val stageType = when (sleep.sleepState) {
                 1 -> SleepSessionRecord.STAGE_TYPE_LIGHT
@@ -49,7 +53,7 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     // 心率
     // ============================================================
 
-    suspend fun writeHeartRateRecords(hrList: List<HuaweiHealthClient.HeartRateData>) {
+    suspend fun writeHeartRateRecords(hrList: List<HeartRateData>) {
         val records = hrList.map { hr ->
             HeartRateRecord(
                 startTime = hr.timestamp.toUtcInstant(),
@@ -59,7 +63,7 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
                 samples = listOf(
                     HeartRateRecord.Sample(
                         time = hr.timestamp.toUtcInstant(),
-                        beatsPerMinute = hr.bpm.toLong()
+                        beatsPerMinute = Math.round(hr.bpm.toDouble()).toLong()
                     )
                 )
             )
@@ -71,7 +75,7 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     // 步数
     // ============================================================
 
-    suspend fun writeStepsRecords(stepsList: List<HuaweiHealthClient.StepsData>) {
+    suspend fun writeStepsRecords(stepsList: List<StepsData>) {
         val records = stepsList.map { step ->
             StepsRecord(
                 startTime = step.startTime.toUtcInstant(),
@@ -88,7 +92,7 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     // 运动
     // ============================================================
 
-    suspend fun writeExerciseRecords(exerciseList: List<HuaweiHealthClient.ExerciseData>) {
+    suspend fun writeExerciseRecords(exerciseList: List<ExerciseRecord>) {
         val records = exerciseList.map { ex ->
             ExerciseSessionRecord(
                 startTime = ex.startTime.toUtcInstant(),

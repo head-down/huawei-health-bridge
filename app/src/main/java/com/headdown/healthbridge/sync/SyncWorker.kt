@@ -3,6 +3,7 @@ package com.headdown.healthbridge.sync
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.work.*
+import com.headdown.healthbridge.data.*
 import com.headdown.healthbridge.huawei.HuaweiHealthClient
 import com.headdown.healthbridge.healthconnect.HealthConnectWriter
 import kotlinx.coroutines.*
@@ -28,10 +29,26 @@ class SyncWorker(
             val startTime = endTime - TimeUnit.DAYS.toMillis(3)
 
             // 拉取各类型数据并写入 Health Connect
-            launch { writer.writeSleepRecords(huaweiClient.querySleepData(startTime, endTime)) }
-            launch { writer.writeHeartRateRecords(huaweiClient.queryHeartRate(startTime, endTime)) }
-            launch { writer.writeStepsRecords(huaweiClient.querySteps(startTime, endTime)) }
-            launch { writer.writeExerciseRecords(huaweiClient.queryExercise(startTime, endTime)) }
+            launch {
+                val sleepData = huaweiClient.querySleepData(startTime, endTime)
+                    .map { SleepRecord(it.startTime, it.endTime, it.sleepState) }
+                writer.writeSleepRecords(sleepData)
+            }
+            launch {
+                val hrData = huaweiClient.queryHeartRate(startTime, endTime)
+                    .map { HeartRateData(it.timestamp, it.bpm) }
+                writer.writeHeartRateRecords(hrData)
+            }
+            launch {
+                val stepsData = huaweiClient.querySteps(startTime, endTime)
+                    .map { StepsData(it.startTime, it.endTime, it.steps) }
+                writer.writeStepsRecords(stepsData)
+            }
+            launch {
+                val exerciseData = huaweiClient.queryExercise(startTime, endTime)
+                    .map { ExerciseRecord(it.startTime, it.endTime, it.exerciseType) }
+                writer.writeExerciseRecords(exerciseData)
+            }
             launch { writer.writeWeightRecords(huaweiClient.queryWeight(startTime, endTime)) }
             launch { writer.writeSpO2Records(huaweiClient.querySpO2(startTime, endTime)) }
             launch { writer.writeTemperatureRecords(huaweiClient.queryTemperature(startTime, endTime)) }
