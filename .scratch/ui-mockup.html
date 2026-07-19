@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华为健康桥 UI Mockup</title>
+<style>
+  :root {
+    --primary: #1B5E20;
+    --primary-container: #B9F6B5;
+    --on-primary-container: #002204;
+    --secondary: #0D47A1;
+    --secondary-container: #D1E4FF;
+    --on-secondary-container: #001945;
+    --surface: #FAFDF8;
+    --surface-variant: #DEE5D9;
+    --on-surface: #191C1A;
+    --on-surface-variant: #424940;
+    --outline: #72796F;
+    --outline-variant: #C2C9BF;
+    --error-container: #FFDAD6;
+    --on-error-container: #410002;
+    --bg: #FCFDF7;
+    --shadow: rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #ECEFF1;
+    margin: 0;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 { color: var(--on-surface); margin-bottom: 8px; }
+  .subtitle { color: var(--on-surface-variant); margin-bottom: 32px; }
+  .screens-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: center;
+  }
+  .phone {
+    width: 360px;
+    background: #000;
+    border-radius: 40px;
+    padding: 14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+  }
+  .screen {
+    width: 100%;
+    height: 720px;
+    background: var(--bg);
+    border-radius: 30px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .status-label {
+    text-align: center;
+    color: var(--on-surface);
+    font-weight: 600;
+    margin-top: 16px;
+  }
+  .appbar {
+    height: 64px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 1px 2px var(--shadow);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--on-surface);
+  }
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .header {
+    text-align: center;
+    margin: 8px 0 20px;
+  }
+  .header h2 {
+    color: var(--primary);
+    margin: 0 0 6px;
+    font-size: 26px;
+  }
+  .header p {
+    color: var(--on-surface-variant);
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .stepper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .step-row {
+    display: flex;
+    gap: 12px;
+  }
+  .step-track {
+    width: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .step-circle.todo { background: var(--surface-variant); color: var(--on-surface-variant); }
+  .step-circle.doing { background: var(--secondary-container); color: var(--secondary); }
+  .step-circle.done { background: var(--primary-container); color: var(--primary); }
+  .step-line {
+    width: 2px;
+    flex: 1;
+    background: var(--outline-variant);
+    margin: 4px 0;
+  }
+  .step-line.active { background: var(--primary); }
+  .step-card {
+    flex: 1;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 6px var(--shadow);
+  }
+  .step-card h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: var(--on-surface);
+  }
+  .step-card p {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: var(--on-surface-variant);
+    line-height: 1.4;
+  }
+  .btn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:disabled { background: var(--outline-variant); color: var(--outline); }
+  .btn-secondary { background: transparent; color: var(--primary); border: 1px solid var(--outline); }
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status-card {
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .status-card.syncing { background: var(--primary-container); color: var(--on-primary-container); }
+  .status-card.error { background: var(--error-container); color: var(--on-error-container); text-align: left; }
+  .result-card {
+    background: var(--secondary-container);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .result-card h3 { margin: 0 0 12px; color: var(--on-secondary-container); }
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .result-item {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+  .result-item .icon { font-size: 22px; color: var(--secondary); }
+  .result-item .count { font-size: 22px; font-weight: 700; color: var(--on-surface); }
+  .result-item .label { font-size: 12px; color: var(--on-surface-variant); }
+  .divider { height: 1px; background: var(--outline-variant); margin: 8px 0; }
+  .total { color: var(--on-secondary-container); font-size: 14px; font-weight: 500; }
+</style>
+</head>
+<body>
+  <h1>华为健康桥 — 新主界面样式</h1>
+  <div class="subtitle">commit c80bcde feat(ui): redesign main screen with Material3 theme and stepper cards</div>
+
+  <div class="screens-container">
+    <!-- Screen 1: Initial -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">华为健康桥</div>
+          <div class="content">
+            <div class="header">
+              <h2>华为健康桥</h2>
+              <p>将华为运动健康数据安全同步到 Google Health Connect</p>
+            </div>
+            <div class="stepper">
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle todo">☁</div>
+                  <div class="step-line"></div>
+                </div>
+                <div class="step-card">
+                  <h3>授权华为运动健康</h3>
+                  <p>登录华为账号并授权读取运动健康数据</p>
+                  <button class="btn btn-primary">去授权</button>
+                </div>
+              </div>
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle todo">♥</div>
+                  <div class="step-line"></div>
+                </div>
+                <div class="step-card">
+                  <h3>授权 Health Connect</h3>
+                  <p>允许写入睡眠、心率、步数等健康数据</p>
+                  <button class="btn btn-primary" disabled>去授权</button>
+                </div>
+              </div>
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle todo">↻</div>
+                </div>
+                <div class="step-card">
+                  <h3>开始同步</h3>
+                  <p>一键将华为数据同步到 Health Connect</p>
+                  <button class="btn btn-primary" disabled>开始同步</button>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-secondary">↻ 刷新同步</button>
+          </div>
+        </div>
+      </div>
+      <div class="status-label">初始状态：未授权</div>
+    </div>
+
+    <!-- Screen 2: Syncing -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">华为健康桥</div>
+          <div class="content">
+            <div class="header">
+              <h2>华为健康桥</h2>
+              <p>将华为运动健康数据安全同步到 Google Health Connect</p>
+            </div>
+            <div class="stepper">
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle done">✓</div>
+                  <div class="step-line active"></div>
+                </div>
+                <div class="step-card">
+                  <h3>授权华为运动健康</h3>
+                  <p>登录华为账号并授权读取运动健康数据</p>
+                  <button class="btn btn-primary" disabled>已完成</button>
+                </div>
+              </div>
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle done">✓</div>
+                  <div class="step-line active"></div>
+                </div>
+                <div class="step-card">
+                  <h3>授权 Health Connect</h3>
+                  <p>允许写入睡眠、心率、步数等健康数据</p>
+                  <button class="btn btn-primary" disabled>已完成</button>
+                </div>
+              </div>
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle doing"><div class="spinner"></div></div>
+                </div>
+                <div class="step-card">
+                  <h3>开始同步</h3>
+                  <p>一键将华为数据同步到 Health Connect</p>
+                  <button class="btn btn-primary"><div class="spinner"></div>同步中</button>
+                </div>
+              </div>
+            </div>
+            <div class="status-card syncing">
+              <div class="spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px;"></div>
+              <div>已同步: 睡眠 心率 (2/4)</div>
+            </div>
+            <button class="btn btn-secondary" disabled>↻ 刷新同步</button>
+          </div>
+        </div>
+      </div>
+      <div class="status-label">同步中状态</div>
+    </div>
+
+    <!-- Screen 3: Success -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">华为健康桥</div>
+          <div class="content">
+            <div class="header">
+              <h2>华为健康桥</h2>
+              <p>将华为运动健康数据安全同步到 Google Health Connect</p>
+            </div>
+            <div class="stepper">
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle done">✓</div>
+                  <div class="step-line active"></div>
+                </div>
+                <div class="step-card">
+                  <h3>授权华为运动健康</h3>
+                  <p>登录华为账号并授权读取运动健康数据</p>
+                  <button class="btn btn-primary" disabled>已完成</button>
+                </div>
+              </div>
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle done">✓</div>
+                  <div class="step-line active"></div>
+                </div>
+                <div class="step-card">
+                  <h3>授权 Health Connect</h3>
+                  <p>允许写入睡眠、心率、步数等健康数据</p>
+                  <button class="btn btn-primary" disabled>已完成</button>
+                </div>
+              </div>
+              <div class="step-row">
+                <div class="step-track">
+                  <div class="step-circle done">✓</div>
+                </div>
+                <div class="step-card">
+                  <h3>开始同步</h3>
+                  <p>一键将华为数据同步到 Health Connect</p>
+                  <button class="btn btn-primary" disabled>同步完成</button>
+                </div>
+              </div>
+            </div>
+            <div class="result-card">
+              <h3>同步完成</h3>
+              <div class="result-grid">
+                <div class="result-item">
+                  <div class="icon">☾</div>
+                  <div class="count">12</div>
+                  <div class="label">睡眠</div>
+                </div>
+                <div class="result-item">
+                  <div class="icon">♥</div>
+                  <div class="count">86</div>
+                  <div class="label">心率</div>
+                </div>
+                <div class="result-item">
+                  <div class="icon">🚶</div>
+                  <div class="count">8432</div>
+                  <div class="label">步数</div>
+                </div>
+                <div class="result-item">
+                  <div class="icon">🏋</div>
+                  <div class="count">3</div>
+                  <div class="label">运动</div>
+                </div>
+              </div>
+              <div class="divider"></div>
+              <div class="total">共同步 137 条记录</div>
+            </div>
+            <button class="btn btn-secondary">↻ 刷新同步</button>
+          </div>
+        </div>
+      </div>
+      <div class="status-label">同步完成状态</div>
+    </div>
+  </div>
+</body>
+</html>
