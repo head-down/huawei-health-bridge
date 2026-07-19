@@ -171,9 +171,9 @@ class HuaweiHealthClient @JvmOverloads constructor(
         for (i in 0 until valueArray.length()) {
             val entry = valueArray.getJSONObject(i)
             if (entry.optString("fieldName") == fieldName) {
-                return entry.opt("integerValue")
+                return entry.opt("longValue")
+                    ?: entry.opt("integerValue")
                     ?: entry.opt("floatValue")
-                    ?: entry.opt("longValue")
                     ?: entry.optString("stringValue", null)
             }
         }
