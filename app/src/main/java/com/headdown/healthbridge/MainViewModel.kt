@@ -5,6 +5,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.headdown.healthbridge.data.AuthProvider
+import com.headdown.healthbridge.data.SyncPreferences
 import com.headdown.healthbridge.data.SyncResult
 import com.headdown.healthbridge.healthconnect.HealthConnectWriter
 import com.headdown.healthbridge.huawei.HuaweiHealthClient
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 
 data class MainUiState(
     val huaweiAuthState: HuaweiAuthState = HuaweiAuthState.Idle,
@@ -55,6 +55,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val huaweiClient: HuaweiHealthClient by lazy {
         HuaweiHealthClient(application)
+    }
+
+    private val syncPrefs by lazy {
+        SyncPreferences(application)
     }
 
     private val healthConnectClient: HealthConnectClient by lazy {
@@ -95,6 +99,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Health Connect 权限授权中。
+     */
+    fun onHealthConnectGranting() {
+        _uiState.update { it.copy(healthConnectState = HealthConnectState.Granting) }
+    }
+
+    /**
      * Health Connect 权限已授予。
      */
     fun onHealthConnectGranted() {
@@ -115,7 +126,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 syncResult = null,
                 syncedTypes = emptyList(),
                 syncProgress = 0,
-                healthConnectState = HealthConnectState.Granted
             )
         }
 
@@ -133,25 +143,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val result = withContext(Dispatchers.IO) {
                     val authProvider = object : AuthProvider {
                         override suspend fun getToken() = huaweiClient.getValidToken()
-                        override fun isTokenValid() = huaweiClient.getValidToken() != null
-                        override suspend fun refreshToken() =
-                            huaweiClient.getValidToken() // TODO: 真实 refresh_token 刷新
+                        override fun isTokenValid() = huaweiClient.isTokenValid()
+                        override suspend fun refreshToken() = getToken()
                     }
 
                     val syncer = Syncer(huaweiClient, authProvider, healthConnectWriter)
 
-                    // 计算同步窗口：最近 30 天
-                    val prefs = getApplication<Application>()
-                        .getSharedPreferences("sync_prefs", android.content.Context.MODE_PRIVATE)
-                    val lastSyncedAt = prefs.getLong("last_synced_at", 0L)
                     val endTime = System.currentTimeMillis()
-                    val thirtyDaysAgo = endTime - TimeUnit.DAYS.toMillis(30)
-                    val startTime = if (lastSyncedAt > 0) lastSyncedAt else thirtyDaysAgo
+                    val startTime = syncPrefs.computeStartTime(endTime)
 
                     val syncResult = syncer.performSync(startTime, endTime, progress)
 
-                    // 保存检查点
-                    prefs.edit().putLong("last_synced_at", endTime).apply()
+                    syncPrefs.saveSyncTime(endTime)
 
                     syncResult
                 }

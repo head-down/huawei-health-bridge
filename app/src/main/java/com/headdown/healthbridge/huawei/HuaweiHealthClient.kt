@@ -103,9 +103,14 @@ class HuaweiHealthClient @JvmOverloads constructor(
         })
     }
 
+    /** 轻量级检查 Token 是否有效，无副作用 */
+    fun isTokenValid(): Boolean {
+        return accessToken != null && System.currentTimeMillis() < tokenExpiry - 60_000
+    }
+
     /** 获取有效的 Token，过期则刷新 */
     internal fun getValidToken(): String? {
-        if (accessToken != null && System.currentTimeMillis() < tokenExpiry - 60_000) {
+        if (isTokenValid()) {
             return accessToken
         }
         // TODO: 用 Refresh Token 刷新

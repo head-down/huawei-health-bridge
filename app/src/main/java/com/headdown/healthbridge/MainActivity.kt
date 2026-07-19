@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestHealthPermissions() {
+        mainViewModel.onHealthConnectGranting()
         healthPermissionsLauncher.launch(HEALTH_PERMISSIONS)
     }
 
@@ -172,7 +173,7 @@ fun MainScreen(
                 step = "2",
                 label = "授权 Health Connect",
                 isDone = uiState.healthConnectState == HealthConnectState.Granted,
-                isInProgress = false,
+                isInProgress = uiState.healthConnectState == HealthConnectState.Granting,
                 enabled = uiState.syncState != SyncState.Syncing,
                 onClick = onRequestHealthPermissions
             )
@@ -197,13 +198,12 @@ fun MainScreen(
             }
 
             // --- 刷新按钮 ---
-            if (uiState.syncState == SyncState.Success || uiState.syncState == SyncState.Error) {
-                OutlinedButton(
-                    onClick = { viewModel.refreshSync() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("刷新同步")
-                }
+            OutlinedButton(
+                onClick = { viewModel.refreshSync() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = uiState.syncState != SyncState.Syncing
+            ) {
+                Text("刷新同步")
             }
         }
     }
