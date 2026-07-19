@@ -104,7 +104,7 @@ class HuaweiHealthClient @JvmOverloads constructor(
     }
 
     /** 获取有效的 Token，过期则刷新 */
-    private fun getValidToken(): String? {
+    internal fun getValidToken(): String? {
         if (accessToken != null && System.currentTimeMillis() < tokenExpiry - 60_000) {
             return accessToken
         }

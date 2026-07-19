@@ -30,5 +30,5 @@ fi
 
 export JAVA_HOME
 exec "$JAVA_HOME/bin/java" \
-    -classpath "$GRADLE_DIR/lib/gradle-launcher-8.7.jar" \
+    -classpath "$GRADLE_DIR/lib/*" \
     org.gradle.launcher.GradleMain "$@"

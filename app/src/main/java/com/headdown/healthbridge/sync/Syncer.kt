@@ -2,9 +2,10 @@ package com.headdown.healthbridge.sync
 
 import com.headdown.healthbridge.data.AuthProvider
 import com.headdown.healthbridge.data.HealthDataSource
+import com.headdown.healthbridge.data.SyncResult
 import com.headdown.healthbridge.healthconnect.HealthConnectWriter
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * 同步核心业务逻辑，不依赖 Android 框架，便于通过 Mock 接口测试。
@@ -33,11 +34,36 @@ class Syncer(
      * 执行一次同步：并行查询 4 类健康数据并写入 Health Connect。
      *
      * 调用方负责计算时间窗口和检查点持久化。
+     *
+     * @return 各类型数据同步的条数统计
      */
-    suspend fun performSync(startTimeMs: Long, endTimeMs: Long) = coroutineScope {
-        launch { writer.writeSleepRecords(dataSource.querySleep(startTimeMs, endTimeMs)) }
-        launch { writer.writeHeartRateRecords(dataSource.queryHeartRate(startTimeMs, endTimeMs)) }
-        launch { writer.writeStepsRecords(dataSource.querySteps(startTimeMs, endTimeMs)) }
-        launch { writer.writeExerciseRecords(dataSource.queryExercise(startTimeMs, endTimeMs)) }
+    suspend fun performSync(startTimeMs: Long, endTimeMs: Long): SyncResult = coroutineScope {
+        val sleepDeferred = async {
+            val data = dataSource.querySleep(startTimeMs, endTimeMs)
+            if (data.isNotEmpty()) writer.writeSleepRecords(data)
+            data.size
+        }
+        val hrDeferred = async {
+            val data = dataSource.queryHeartRate(startTimeMs, endTimeMs)
+            if (data.isNotEmpty()) writer.writeHeartRateRecords(data)
+            data.size
+        }
+        val stepsDeferred = async {
+            val data = dataSource.querySteps(startTimeMs, endTimeMs)
+            if (data.isNotEmpty()) writer.writeStepsRecords(data)
+            data.size
+        }
+        val exerciseDeferred = async {
+            val data = dataSource.queryExercise(startTimeMs, endTimeMs)
+            if (data.isNotEmpty()) writer.writeExerciseRecords(data)
+            data.size
+        }
+
+        SyncResult(
+            sleep = sleepDeferred.await(),
+            heartRate = hrDeferred.await(),
+            steps = stepsDeferred.await(),
+            exercise = exerciseDeferred.await()
+        )
     }
 }

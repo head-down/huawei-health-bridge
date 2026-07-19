@@ -1,5 +1,7 @@
 package com.headdown.healthbridge
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,30 +11,35 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
+import androidx.lifecycle.ViewModelProvider
 import androidx.work.*
-import com.headdown.healthbridge.huawei.HuaweiConfig
-import com.headdown.healthbridge.huawei.HuaweiHealthClient
-import com.headdown.healthbridge.healthconnect.HealthConnectWriter
+import com.headdown.healthbridge.data.SyncResult
 import com.headdown.healthbridge.sync.SyncWorker
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
 
-    private val healthConnectClient by lazy { HealthConnectClient.getOrCreate(context = this) }
-    private lateinit var huaweiClient: HuaweiHealthClient
-    private lateinit var healthConnectWriter: HealthConnectWriter
+    private lateinit var mainViewModel: MainViewModel
+
+    /** Health Connect 权限请求启动器 — 字段级声明确保在 Activity RESUMED 前注册 */
+    private val healthPermissionsLauncher = registerForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        if (granted.containsAll(HEALTH_PERMISSIONS)) {
+            mainViewModel.onHealthConnectGranted()
+            mainViewModel.syncData()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        huaweiClient = HuaweiHealthClient(this)
-        healthConnectWriter = HealthConnectWriter(healthConnectClient)
+        mainViewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         // 检查 OAuth 回调
         handleOAuthCallback(intent)
@@ -43,23 +50,40 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 MainScreen(
-                    onSync = { syncData() },
-                    onAuthorizeHuawei = { startHuaweiAuth() },
-                    onRequestHealthPermissions = { requestHealthPermissions() }
+                    viewModel = mainViewModel,
+                    onAuthorizeHuawei = ::startHuaweiAuth,
+                    onRequestHealthPermissions = ::requestHealthPermissions
                 )
             }
         }
     }
 
-    private fun handleOAuthCallback(intent: android.content.Intent) {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleOAuthCallback(intent)
+    }
+
+    private fun handleOAuthCallback(intent: Intent) {
         intent.data?.let { uri ->
             if (uri.scheme == "com.headdown.healthbridge" && uri.host == "oauth") {
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-                    huaweiClient.exchangeCodeForToken(code)
+                    mainViewModel.huaweiClient.exchangeCodeForToken(code)
+                    mainViewModel.onHuaweiAuthComplete()
                 }
             }
         }
+    }
+
+    private fun startHuaweiAuth() {
+        mainViewModel.onHuaweiAuthStarted()
+        val authUrl = mainViewModel.huaweiClient.getAuthorizationUrl()
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
+        startActivity(browserIntent)
+    }
+
+    private fun requestHealthPermissions() {
+        healthPermissionsLauncher.launch(HEALTH_PERMISSIONS)
     }
 
     private fun schedulePeriodicSync() {
@@ -79,21 +103,8 @@ class MainActivity : ComponentActivity() {
             )
     }
 
-    private fun syncData() {
-        // TODO: 实现完整同步流程
-        // 1. 检查华为 Token 是否有效
-        // 2. 从华为 API 拉取最新数据
-        // 3. 去重（根据时间戳）
-        // 4. 写入 Health Connect
-    }
-
-    private fun startHuaweiAuth() {
-        val authUrl = huaweiClient.getAuthorizationUrl()
-        // TODO: 启动浏览器进行 OAuth 授权
-    }
-
-    private fun requestHealthPermissions() {
-        val permissions = setOf(
+    companion object {
+        private val HEALTH_PERMISSIONS = setOf(
             HealthPermission.getReadPermission(SleepSessionRecord::class),
             HealthPermission.getWritePermission(SleepSessionRecord::class),
             HealthPermission.getReadPermission(HeartRateRecord::class),
@@ -115,26 +126,18 @@ class MainActivity : ComponentActivity() {
             HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
             HealthPermission.getWritePermission(TotalCaloriesBurnedRecord::class),
         )
-
-        val launcher = registerForActivityResult(
-            PermissionController.createRequestPermissionResultContract()
-        ) { granted ->
-            if (granted.containsAll(permissions)) {
-                // 权限已授予，开始同步
-                syncData()
-            }
-        }
-        launcher.launch(permissions)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onSync: () -> Unit,
+    viewModel: MainViewModel,
     onAuthorizeHuawei: () -> Unit,
     onRequestHealthPermissions: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("华为健康桥") })
@@ -144,24 +147,184 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("将华为运动健康数据同步到 Health Connect")
-            Spacer(Modifier.height(16.dp))
+            Text(
+                "将华为运动健康数据同步到 Health Connect",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
 
-            Button(onClick = onAuthorizeHuawei, modifier = Modifier.fillMaxWidth()) {
-                Text("1. 授权华为运动健康")
-            }
+            // --- 步骤 1: 授权华为 ---
+            StepButton(
+                step = "1",
+                label = "授权华为运动健康",
+                isDone = uiState.huaweiAuthState == HuaweiAuthState.Authorized,
+                isInProgress = uiState.huaweiAuthState == HuaweiAuthState.Authorizing,
+                enabled = uiState.syncState != SyncState.Syncing,
+                onClick = onAuthorizeHuawei
+            )
 
-            Button(onClick = onRequestHealthPermissions, modifier = Modifier.fillMaxWidth()) {
-                Text("2. 授权 Health Connect")
-            }
+            // --- 步骤 2: 授权 Health Connect ---
+            StepButton(
+                step = "2",
+                label = "授权 Health Connect",
+                isDone = uiState.healthConnectState == HealthConnectState.Granted,
+                isInProgress = false,
+                enabled = uiState.syncState != SyncState.Syncing,
+                onClick = onRequestHealthPermissions
+            )
 
-            Button(onClick = onSync, modifier = Modifier.fillMaxWidth()) {
+            // --- 步骤 3: 开始同步 ---
+            Button(
+                onClick = { viewModel.syncData() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = uiState.syncState != SyncState.Syncing
+            ) {
                 Text("3. 开始同步")
             }
+
+            Spacer(Modifier.height(8.dp))
+
+            // --- 同步状态区域 ---
+            SyncStatusSection(uiState)
+
+            // --- 结果摘要 ---
+            if (uiState.syncResult != null) {
+                SyncResultCard(uiState.syncResult!!)
+            }
+
+            // --- 刷新按钮 ---
+            if (uiState.syncState == SyncState.Success || uiState.syncState == SyncState.Error) {
+                OutlinedButton(
+                    onClick = { viewModel.refreshSync() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("刷新同步")
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun StepButton(
+    step: String,
+    label: String,
+    isDone: Boolean,
+    isInProgress: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = enabled && !isDone,
+        colors = if (isDone) {
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        } else {
+            ButtonDefaults.buttonColors()
+        }
+    ) {
+        if (isInProgress) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+            Spacer(Modifier.width(8.dp))
+        }
+        Text("$step. $label")
+        if (isDone) {
+            Spacer(Modifier.width(8.dp))
+            Text("✓", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun SyncStatusSection(uiState: MainUiState) {
+    when (uiState.syncState) {
+        SyncState.Syncing -> {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CircularProgressIndicator()
+                Text(
+                    "正在同步健康数据...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        SyncState.Error -> {
+            val msg = uiState.syncError ?: "同步失败"
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    msg,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+        SyncState.Idle, SyncState.Success -> { /* 空闲或成功时此处无特殊状态 */ }
+    }
+}
+
+@Composable
+private fun SyncResultCard(result: SyncResult) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                "同步完成",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(Modifier.height(4.dp))
+            SyncResultRow("睡眠", result.sleep)
+            SyncResultRow("心率", result.heartRate)
+            SyncResultRow("步数", result.steps)
+            SyncResultRow("运动", result.exercise)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            Text(
+                "共同步 ${result.total} 条记录",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun SyncResultRow(label: String, count: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text("${count} 条", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
     }
 }
