@@ -8,6 +8,7 @@ import com.headdown.healthbridge.data.AuthProvider
 import com.headdown.healthbridge.data.SyncResult
 import com.headdown.healthbridge.healthconnect.HealthConnectWriter
 import com.headdown.healthbridge.huawei.HuaweiHealthClient
+import com.headdown.healthbridge.sync.SyncProgress
 import com.headdown.healthbridge.sync.Syncer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,8 @@ data class MainUiState(
     val syncState: SyncState = SyncState.Idle,
     val syncResult: SyncResult? = null,
     val syncError: String? = null,
+    val syncedTypes: List<String> = emptyList(),
+    val syncProgress: Int = 0,
 )
 
 enum class HuaweiAuthState {
@@ -50,7 +53,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    val huaweiClient: HuaweiHealthClient by lazy {
+    private val huaweiClient: HuaweiHealthClient by lazy {
         HuaweiHealthClient(application)
     }
 
@@ -60,6 +63,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val healthConnectWriter: HealthConnectWriter by lazy {
         HealthConnectWriter(healthConnectClient)
+    }
+
+    /**
+     * 华为 OAuth 授权 URL。
+     * Activity 调用此方法获取 URL 后启动浏览器。
+     */
+    fun getAuthorizationUrl(): String = huaweiClient.getAuthorizationUrl()
+
+    /**
+     * 用回调 code 换取 access token，成功后更新 UI 状态。
+     */
+    fun exchangeCodeForToken(code: String) {
+        huaweiClient.exchangeCodeForToken(code)
+        _uiState.update { it.copy(huaweiAuthState = HuaweiAuthState.Authorized) }
     }
 
     /**
@@ -96,12 +113,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 syncState = SyncState.Syncing,
                 syncError = null,
                 syncResult = null,
+                syncedTypes = emptyList(),
+                syncProgress = 0,
                 healthConnectState = HealthConnectState.Granted
             )
         }
 
         viewModelScope.launch {
             try {
+                val progress = SyncProgress { type ->
+                    _uiState.update { state ->
+                        state.copy(
+                            syncedTypes = state.syncedTypes + type,
+                            syncProgress = state.syncedTypes.size + 1
+                        )
+                    }
+                }
+
                 val result = withContext(Dispatchers.IO) {
                     val authProvider = object : AuthProvider {
                         override suspend fun getToken() = huaweiClient.getValidToken()
@@ -120,7 +148,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val thirtyDaysAgo = endTime - TimeUnit.DAYS.toMillis(30)
                     val startTime = if (lastSyncedAt > 0) lastSyncedAt else thirtyDaysAgo
 
-                    val syncResult = syncer.performSync(startTime, endTime)
+                    val syncResult = syncer.performSync(startTime, endTime, progress)
 
                     // 保存检查点
                     prefs.edit().putLong("last_synced_at", endTime).apply()

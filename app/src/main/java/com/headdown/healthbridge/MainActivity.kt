@@ -68,8 +68,7 @@ class MainActivity : ComponentActivity() {
             if (uri.scheme == "com.headdown.healthbridge" && uri.host == "oauth") {
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-                    mainViewModel.huaweiClient.exchangeCodeForToken(code)
-                    mainViewModel.onHuaweiAuthComplete()
+                    mainViewModel.exchangeCodeForToken(code)
                 }
             }
         }
@@ -77,7 +76,7 @@ class MainActivity : ComponentActivity() {
 
     private fun startHuaweiAuth() {
         mainViewModel.onHuaweiAuthStarted()
-        val authUrl = mainViewModel.huaweiClient.getAuthorizationUrl()
+        val authUrl = mainViewModel.getAuthorizationUrl()
         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
         startActivity(browserIntent)
     }
@@ -256,9 +255,13 @@ private fun SyncStatusSection(uiState: MainUiState) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                CircularProgressIndicator()
+                LinearProgressIndicator(
+                    progress = { if (uiState.syncProgress > 0) uiState.syncProgress.toFloat() / 4f else 0f },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Text(
-                    "正在同步健康数据...",
+                    if (uiState.syncedTypes.isEmpty()) "正在同步健康数据..."
+                    else "已同步: ${uiState.syncedTypes.joinToString(" ")} (${uiState.syncProgress}/4)",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
