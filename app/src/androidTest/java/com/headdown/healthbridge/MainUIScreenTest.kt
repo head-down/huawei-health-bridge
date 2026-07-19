@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.headdown.healthbridge.ui.MainScreen
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,9 +35,9 @@ class MainUIScreenTest {
 
     @Test
     fun displaysAllStepButtonsInInitialState() {
-        composeTestRule.onNodeWithText("1. 授权华为运动健康").assertIsDisplayed()
-        composeTestRule.onNodeWithText("2. 授权 Health Connect").assertIsDisplayed()
-        composeTestRule.onNodeWithText("3. 开始同步").assertIsDisplayed()
+        composeTestRule.onNodeWithText("授权华为运动健康").assertIsDisplayed()
+        composeTestRule.onNodeWithText("授权 Health Connect").assertIsDisplayed()
+        composeTestRule.onNodeWithText("开始同步").assertIsDisplayed()
     }
 
     @Test
@@ -60,8 +61,8 @@ class MainUIScreenTest {
         }
         composeTestRule.waitForIdle()
 
-        // 按钮应显示 ✓ 标记
-        composeTestRule.onNodeWithText("✓").assertIsDisplayed()
+        // 按钮应显示完成图标
+        composeTestRule.onNodeWithContentDescription("已完成").assertIsDisplayed()
     }
 
     @Test
@@ -77,7 +78,7 @@ class MainUIScreenTest {
         composeTestRule.waitForIdle()
 
         // 按钮应仍然可见（checkmark 不显示 — 因为 Authorizing 不是 Authorized）
-        composeTestRule.onNodeWithText("1. 授权华为运动健康").assertIsDisplayed()
+        composeTestRule.onNodeWithText("授权华为运动健康").assertIsDisplayed()
     }
 
     // ============================================================
@@ -86,13 +87,13 @@ class MainUIScreenTest {
 
     @Test
     fun syncButtonClickEntersSyncingState() {
-        composeTestRule.onNodeWithText("3. 开始同步").performClick()
+        composeTestRule.onNodeWithText("开始同步").performClick()
 
         // 同步过程中进度文本出现
         composeTestRule.waitForIdle()
         // 注意：同步会调用真实 API，可能快速失败或挂起
         // 最低要求：按钮点击不发生崩溃并显示某种同步状态
-        composeTestRule.onNodeWithText("3. 开始同步").assertIsDisplayed()
+        composeTestRule.onNodeWithText("开始同步").assertIsDisplayed()
     }
 
     // ============================================================

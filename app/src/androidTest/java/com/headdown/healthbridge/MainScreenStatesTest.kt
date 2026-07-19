@@ -6,6 +6,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.headdown.healthbridge.ui.MainScreen
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,21 +46,21 @@ class MainScreenStatesTest {
     @Test
     fun huaweiIdle_showsNormalButton() {
         setContentWithState(MainUiState())
-        composeTestRule.onNodeWithText("1. 授权华为运动健康").assertIsDisplayed()
-        composeTestRule.onNodeWithText("✓").assertDoesNotExist()
+        composeTestRule.onNodeWithText("授权华为运动健康").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("已完成").assertDoesNotExist()
     }
 
     @Test
     fun huaweiAuthorizing_showsProgressIndicator() {
         setContentWithState(MainUiState(huaweiAuthState = HuaweiAuthState.Authorizing))
-        composeTestRule.onNodeWithText("1. 授权华为运动健康").assertIsDisplayed()
+        composeTestRule.onNodeWithText("授权华为运动健康").assertIsDisplayed()
         // Authorizing 状态下进度指示器应可见（CircularProgressIndicator 无文字，通过状态验证）
     }
 
     @Test
     fun huaweiAuthorized_showsCheckmark() {
         setContentWithState(MainUiState(huaweiAuthState = HuaweiAuthState.Authorized))
-        composeTestRule.onNodeWithText("✓").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("已完成").assertIsDisplayed()
     }
 
     // ============================================================
@@ -69,19 +70,19 @@ class MainScreenStatesTest {
     @Test
     fun healthConnectIdle_showsNormalButton() {
         setContentWithState(MainUiState())
-        composeTestRule.onNodeWithText("2. 授权 Health Connect").assertIsDisplayed()
+        composeTestRule.onNodeWithText("授权 Health Connect").assertIsDisplayed()
     }
 
     @Test
     fun healthConnectGranting_showsButtonAsInProgress() {
         setContentWithState(MainUiState(healthConnectState = HealthConnectState.Granting))
-        composeTestRule.onNodeWithText("2. 授权 Health Connect").assertIsDisplayed()
+        composeTestRule.onNodeWithText("授权 Health Connect").assertIsDisplayed()
     }
 
     @Test
     fun healthConnectGranted_showsCheckmark() {
         setContentWithState(MainUiState(healthConnectState = HealthConnectState.Granted))
-        composeTestRule.onNodeWithText("✓").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("已完成").assertIsDisplayed()
     }
 
     // ============================================================
@@ -91,7 +92,7 @@ class MainScreenStatesTest {
     @Test
     fun syncIdle_showsDefaultButton() {
         setContentWithState(MainUiState(syncState = SyncState.Idle))
-        composeTestRule.onNodeWithText("3. 开始同步").assertIsDisplayed()
+        composeTestRule.onNodeWithText("开始同步").assertIsDisplayed()
     }
 
     @Test
@@ -207,7 +208,7 @@ class MainScreenStatesTest {
         }
 
         // 拒绝后不应显示 ✓ 和 progress
-        composeTestRule.onNodeWithText("2. 授权 Health Connect").assertIsDisplayed()
-        composeTestRule.onNodeWithText("✓").assertDoesNotExist()
+        composeTestRule.onNodeWithText("授权 Health Connect").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("已完成").assertDoesNotExist()
     }
 }
