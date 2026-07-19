@@ -109,10 +109,11 @@ class SyncerTest {
         coEvery { mockDataSource.querySteps(any(), any()) } returns emptyList()
         coEvery { mockDataSource.queryExercise(any(), any()) } returns emptyList()
 
-        assertThrows(RuntimeException::class.java) {
-            runTest {
-                createSyncer().performSync(1L, 2L)
-            }
+        try {
+            createSyncer().performSync(1L, 2L)
+            fail("Expected RuntimeException was not thrown")
+        } catch (e: RuntimeException) {
+            // Expected
         }
     }
 }

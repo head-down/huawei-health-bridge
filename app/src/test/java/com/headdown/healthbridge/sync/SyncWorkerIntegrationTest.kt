@@ -150,8 +150,11 @@ class SyncWorkerIntegrationTest {
         coEvery { partialMockDataSource.querySteps(any(), any()) } returns emptyList()
         coEvery { partialMockDataSource.queryExercise(any(), any()) } returns emptyList()
 
-        assertThrows(RuntimeException::class.java) {
-            runTest { partialSyncer.performSync(1L, 2L) }
+        try {
+            partialSyncer.performSync(1L, 2L)
+            fail("Expected RuntimeException was not thrown")
+        } catch (e: RuntimeException) {
+            // Expected — API error propagates up
         }
     }
 }
