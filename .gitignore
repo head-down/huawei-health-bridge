@@ -17,6 +17,7 @@ bin/
 gen/
 out/
 .navigation/
+.codebuddy/
 *.log
 *.hprof
 # Huawei credentials (contains secrets)
