@@ -14,10 +14,9 @@ class SyncPreferences(context: Context) {
     /** 获取上次同步的时间戳（毫秒），无记录返回 0 */
     fun getLastSyncTime(): Long = prefs.getLong(KEY_LAST_SYNCED_AT, 0L)
 
-    /** 保存本次同步时间戳，同时返回计算后的起始时间（最近的 30 天窗口） */
-    fun saveSyncTime(endTimeMs: Long): Long {
+    /** 保存本次同步时间戳 */
+    fun saveSyncTime(endTimeMs: Long) {
         prefs.edit().putLong(KEY_LAST_SYNCED_AT, endTimeMs).apply()
-        return endTimeMs
     }
 
     /** 计算同步窗口起始时间：最近一次同步时间，或 30 天前 */

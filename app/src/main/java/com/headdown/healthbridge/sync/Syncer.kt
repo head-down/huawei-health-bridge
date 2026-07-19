@@ -1,6 +1,7 @@
 package com.headdown.healthbridge.sync
 
 import com.headdown.healthbridge.data.AuthProvider
+import com.headdown.healthbridge.data.DataType
 import com.headdown.healthbridge.data.HealthDataSource
 import com.headdown.healthbridge.data.SyncResult
 import com.headdown.healthbridge.healthconnect.HealthConnectWriter
@@ -11,7 +12,7 @@ import kotlinx.coroutines.coroutineScope
  * 同步进度回调，每完成一种数据类型后调用。
  */
 fun interface SyncProgress {
-    suspend fun onTypeSynced(type: String)
+    suspend fun onTypeSynced(type: DataType)
 }
 
 /**
@@ -51,24 +52,16 @@ class Syncer(
         progress: SyncProgress? = null
     ): SyncResult = coroutineScope {
         val sleepDeferred = async {
-            val data = dataSource.querySleep(startTimeMs, endTimeMs)
-            if (data.isNotEmpty()) writer.writeSleepRecords(data)
-            data.size.also { progress?.onTypeSynced("睡眠") }
+            syncType(DataType.SLEEP, dataSource::querySleep, writer::writeSleepRecords, startTimeMs, endTimeMs, progress)
         }
         val hrDeferred = async {
-            val data = dataSource.queryHeartRate(startTimeMs, endTimeMs)
-            if (data.isNotEmpty()) writer.writeHeartRateRecords(data)
-            data.size.also { progress?.onTypeSynced("心率") }
+            syncType(DataType.HEART_RATE, dataSource::queryHeartRate, writer::writeHeartRateRecords, startTimeMs, endTimeMs, progress)
         }
         val stepsDeferred = async {
-            val data = dataSource.querySteps(startTimeMs, endTimeMs)
-            if (data.isNotEmpty()) writer.writeStepsRecords(data)
-            data.size.also { progress?.onTypeSynced("步数") }
+            syncType(DataType.STEPS, dataSource::querySteps, writer::writeStepsRecords, startTimeMs, endTimeMs, progress)
         }
         val exerciseDeferred = async {
-            val data = dataSource.queryExercise(startTimeMs, endTimeMs)
-            if (data.isNotEmpty()) writer.writeExerciseRecords(data)
-            data.size.also { progress?.onTypeSynced("运动") }
+            syncType(DataType.EXERCISE, dataSource::queryExercise, writer::writeExerciseRecords, startTimeMs, endTimeMs, progress)
         }
 
         SyncResult(
@@ -77,5 +70,18 @@ class Syncer(
             steps = stepsDeferred.await(),
             exercise = exerciseDeferred.await()
         )
+    }
+
+    private suspend fun <T> syncType(
+        type: DataType,
+        query: suspend (Long, Long) -> List<T>,
+        write: suspend (List<T>) -> Unit,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        progress: SyncProgress?
+    ): Int {
+        val data = query(startTimeMs, endTimeMs)
+        if (data.isNotEmpty()) write(data)
+        return data.size.also { progress?.onTypeSynced(type) }
     }
 }

@@ -5,6 +5,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.headdown.healthbridge.data.AuthProvider
+import com.headdown.healthbridge.data.DataType
 import com.headdown.healthbridge.data.SyncPreferences
 import com.headdown.healthbridge.data.SyncResult
 import com.headdown.healthbridge.healthconnect.HealthConnectWriter
@@ -25,7 +26,7 @@ data class MainUiState(
     val syncState: SyncState = SyncState.Idle,
     val syncResult: SyncResult? = null,
     val syncError: String? = null,
-    val syncedTypes: List<String> = emptyList(),
+    val syncedTypes: List<DataType> = emptyList(),
     val syncProgress: Int = 0,
 )
 
@@ -110,6 +111,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun onHealthConnectGranted() {
         _uiState.update { it.copy(healthConnectState = HealthConnectState.Granted) }
+    }
+
+    /**
+     * Health Connect 权限被拒绝，状态回归 Idle。
+     */
+    fun onHealthConnectDenied() {
+        _uiState.update { it.copy(healthConnectState = HealthConnectState.Idle) }
     }
 
     /**

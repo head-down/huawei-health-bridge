@@ -33,6 +33,8 @@ class MainActivity : ComponentActivity() {
         if (granted.containsAll(HEALTH_PERMISSIONS)) {
             mainViewModel.onHealthConnectGranted()
             mainViewModel.syncData()
+        } else {
+            mainViewModel.onHealthConnectDenied()
         }
     }
 
@@ -261,7 +263,7 @@ private fun SyncStatusSection(uiState: MainUiState) {
                 )
                 Text(
                     if (uiState.syncedTypes.isEmpty()) "正在同步健康数据..."
-                    else "已同步: ${uiState.syncedTypes.joinToString(" ")} (${uiState.syncProgress}/4)",
+                    else "已同步: ${uiState.syncedTypes.joinToString(" ") { it.label }} (${uiState.syncProgress}/4)",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
