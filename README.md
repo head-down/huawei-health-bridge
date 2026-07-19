@@ -71,7 +71,8 @@ cd huawei-health-bridge
 
 # Android Studio 中打开项目
 # 1. 修改 local.properties 中的 SDK 路径
-# 2. 修改 app/src/main/java/com/headdown/healthbridge/huawei/HuaweiConfig.kt 中的 client_id 和 client_secret
+# 2. 复制 docs/HuaweiConfig.example.kt 到 app/src/main/java/com/headdown/healthbridge/huawei/HuaweiConfig.kt
+#    并填入真实 client_id 和 client_secret
 # 3. Run → Run 'app'
 ```
 
@@ -81,18 +82,16 @@ cd huawei-health-bridge
 app/src/main/java/com/headdown/healthbridge/
 ├── MainActivity.kt                 # 主界面 (Jetpack Compose)
 ├── huawei/
-│   ├── HuaweiConfig.kt             # 华为 OAuth 配置
+│   ├── HuaweiConfig.kt             # 华为 OAuth 配置 (需从 docs/ 复制模板)
 │   └── HuaweiHealthClient.kt       # 华为 REST API 客户端
 ├── healthconnect/
 │   └── HealthConnectWriter.kt      # Health Connect 数据写入
 └── sync/
-    └── SyncWorker.kt               # WorkManager 定时同步
-
-app/src/main/
-├── AndroidManifest.xml
-└── res/
-    ├── values/strings.xml
-    └── layout/activity_main.xml
+    └── SyncWorker.kt               # 定时同步 Worker
+app/src/test/java/com/headdown/healthbridge/
+└── ExampleTest.kt                  # 测试示例 (JUnit 5 + MockK)
+docs/
+└── HuaweiConfig.example.kt         # 华为 OAuth 配置模板
 ```
 
 ## License

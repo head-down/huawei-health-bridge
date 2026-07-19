@@ -12,6 +12,9 @@ import java.time.ZoneOffset
  */
 class HealthConnectWriter(private val client: HealthConnectClient) {
 
+    private fun Long.toUtcInstant() = Instant.ofEpochMilli(this)
+    private val utc = ZoneOffset.UTC
+
     // ============================================================
     // 睡眠
     // ============================================================
@@ -26,14 +29,14 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
             }
 
             SleepSessionRecord(
-                startTime = Instant.ofEpochMilli(sleep.startTime),
-                startZoneOffset = ZoneOffset.UTC,
-                endTime = Instant.ofEpochMilli(sleep.endTime),
-                endZoneOffset = ZoneOffset.UTC,
+                startTime = sleep.startTime.toUtcInstant(),
+                startZoneOffset = utc,
+                endTime = sleep.endTime.toUtcInstant(),
+                endZoneOffset = utc,
                 stages = listOf(
                     SleepSessionRecord.Stage(
-                        startTime = Instant.ofEpochMilli(sleep.startTime),
-                        endTime = Instant.ofEpochMilli(sleep.endTime),
+                        startTime = sleep.startTime.toUtcInstant(),
+                        endTime = sleep.endTime.toUtcInstant(),
                         stage = stageType
                     )
                 )
@@ -49,13 +52,13 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     suspend fun writeHeartRateRecords(hrList: List<HuaweiHealthClient.HeartRateData>) {
         val records = hrList.map { hr ->
             HeartRateRecord(
-                startTime = Instant.ofEpochMilli(hr.timestamp),
-                startZoneOffset = ZoneOffset.UTC,
-                endTime = Instant.ofEpochMilli(hr.timestamp),
-                endZoneOffset = ZoneOffset.UTC,
+                startTime = hr.timestamp.toUtcInstant(),
+                startZoneOffset = utc,
+                endTime = hr.timestamp.toUtcInstant(),
+                endZoneOffset = utc,
                 samples = listOf(
                     HeartRateRecord.Sample(
-                        time = Instant.ofEpochMilli(hr.timestamp),
+                        time = hr.timestamp.toUtcInstant(),
                         beatsPerMinute = hr.bpm.toLong()
                     )
                 )
@@ -71,10 +74,10 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     suspend fun writeStepsRecords(stepsList: List<HuaweiHealthClient.StepsData>) {
         val records = stepsList.map { step ->
             StepsRecord(
-                startTime = Instant.ofEpochMilli(step.startTime),
-                startZoneOffset = ZoneOffset.UTC,
-                endTime = Instant.ofEpochMilli(step.endTime),
-                endZoneOffset = ZoneOffset.UTC,
+                startTime = step.startTime.toUtcInstant(),
+                startZoneOffset = utc,
+                endTime = step.endTime.toUtcInstant(),
+                endZoneOffset = utc,
                 count = step.steps.toLong()
             )
         }
@@ -88,10 +91,10 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     suspend fun writeExerciseRecords(exerciseList: List<HuaweiHealthClient.ExerciseData>) {
         val records = exerciseList.map { ex ->
             ExerciseSessionRecord(
-                startTime = Instant.ofEpochMilli(ex.startTime),
-                startZoneOffset = ZoneOffset.UTC,
-                endTime = Instant.ofEpochMilli(ex.endTime),
-                endZoneOffset = ZoneOffset.UTC,
+                startTime = ex.startTime.toUtcInstant(),
+                startZoneOffset = utc,
+                endTime = ex.endTime.toUtcInstant(),
+                endZoneOffset = utc,
                 exerciseType = mapHuaweiExerciseType(ex.exerciseType)
             )
         }
@@ -112,7 +115,6 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
             9 -> ExerciseSessionRecord.EXERCISE_TYPE_BASKETBALL
             10 -> ExerciseSessionRecord.EXERCISE_TYPE_TABLE_TENNIS
             11 -> ExerciseSessionRecord.EXERCISE_TYPE_VOLLEYBALL
-            12 -> ExerciseSessionRecord.EXERCISE_TYPE_HIGH_INTENSITY_INTERVAL_TRAINING
             else -> ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT
         }
     }
@@ -124,8 +126,8 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     suspend fun writeWeightRecords(weightList: List<HuaweiHealthClient.WeightData>) {
         val records = weightList.map { w ->
             WeightRecord(
-                time = Instant.ofEpochMilli(w.timestamp),
-                zoneOffset = ZoneOffset.UTC,
+                time = w.timestamp.toUtcInstant(),
+                zoneOffset = utc,
                 weight = w.weightKg.kilograms
             )
         }
@@ -139,8 +141,8 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     suspend fun writeSpO2Records(spo2List: List<HuaweiHealthClient.SpO2Data>) {
         val records = spo2List.map { s ->
             OxygenSaturationRecord(
-                time = Instant.ofEpochMilli(s.timestamp),
-                zoneOffset = ZoneOffset.UTC,
+                time = s.timestamp.toUtcInstant(),
+                zoneOffset = utc,
                 percentage = s.saturation.toDouble().percent
             )
         }
@@ -154,8 +156,8 @@ class HealthConnectWriter(private val client: HealthConnectClient) {
     suspend fun writeTemperatureRecords(tempList: List<HuaweiHealthClient.TemperatureData>) {
         val records = tempList.map { t ->
             BodyTemperatureRecord(
-                time = Instant.ofEpochMilli(t.timestamp),
-                zoneOffset = ZoneOffset.UTC,
+                time = t.timestamp.toUtcInstant(),
+                zoneOffset = utc,
                 temperature = t.celsius.toDouble().celsius
             )
         }

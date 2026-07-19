@@ -1,5 +1,6 @@
 package com.headdown.healthbridge
 
+import com.headdown.healthbridge.huawei.HuaweiHealthClient
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -39,5 +40,18 @@ class ExampleTest {
         val result = service.greet("World")
         assertEquals("Hello, World!", result)
         coVerify { service.greet("World") }
+    }
+
+    @Test
+    fun `project data class works in test`() {
+        val sleep = HuaweiHealthClient.SleepData(
+            startTime = 1700000000000,
+            endTime = 1700003600000,
+            sleepState = 2
+        )
+
+        assertEquals(1700000000000, sleep.startTime)
+        assertEquals(1700003600000, sleep.endTime)
+        assertEquals(2, sleep.sleepState)
     }
 }
