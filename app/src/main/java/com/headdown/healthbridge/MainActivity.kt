@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -94,14 +95,14 @@ class MainActivity : ComponentActivity() {
 
     private fun requestHealthPermissions() {
         val permissions = setOf(
-            HealthPermission.getReadPermission(SleepSession::class),
-            HealthPermission.getWritePermission(SleepSession::class),
+            HealthPermission.getReadPermission(SleepSessionRecord::class),
+            HealthPermission.getWritePermission(SleepSessionRecord::class),
             HealthPermission.getReadPermission(HeartRateRecord::class),
             HealthPermission.getWritePermission(HeartRateRecord::class),
             HealthPermission.getReadPermission(StepsRecord::class),
             HealthPermission.getWritePermission(StepsRecord::class),
-            HealthPermission.getReadPermission(ExerciseSession::class),
-            HealthPermission.getWritePermission(ExerciseSession::class),
+            HealthPermission.getReadPermission(ExerciseSessionRecord::class),
+            HealthPermission.getWritePermission(ExerciseSessionRecord::class),
             HealthPermission.getReadPermission(OxygenSaturationRecord::class),
             HealthPermission.getWritePermission(OxygenSaturationRecord::class),
             HealthPermission.getReadPermission(WeightRecord::class),
@@ -128,6 +129,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onSync: () -> Unit,
