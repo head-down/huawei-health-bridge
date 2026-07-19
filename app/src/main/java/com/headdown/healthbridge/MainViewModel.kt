@@ -1,6 +1,7 @@
 package com.headdown.healthbridge
 
 import android.app.Application
+import androidx.annotation.VisibleForTesting
 import androidx.health.connect.client.HealthConnectClient
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -197,5 +198,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
         syncData()
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    internal fun overrideTestState(state: MainUiState) {
+        _uiState.value = state
     }
 }
