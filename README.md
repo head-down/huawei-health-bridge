@@ -1,4 +1,12 @@
-# Huawei Health Bridge
+# Huawei Health Bridge [ARCHIVED]
+
+> **项目已归档** — 2026-07-20
+>
+> 原计划通过华为 Health Kit REST API 将华为运动健康数据同步到 Google Health Connect。华为对个人开发者**不开放健康数据 API 权限**，要求应用必须先上架华为/鸿蒙应用市场。个人开发者无法满足此条件，项目终止。
+>
+> **替代方案**：[Health Sync](https://healthsync.app/) (商业 App，约 30 元，支持华为 → Health Connect 全自动同步)
+
+---
 
 将华为运动健康数据同步到 Google Health Connect，供 Migraine Buddy 等第三方健康应用使用。
 
